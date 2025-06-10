@@ -1,6 +1,8 @@
+# Commented out IPython magic to ensure Python compatibility.
 #Import Libraries and print their versions
 %run imports.py
 
+# Commented out IPython magic to ensure Python compatibility.
 %run model_B02.py
 
 def calculate_odds_ratio(idata, var_name="effect"):
@@ -38,14 +40,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 import arviz as az
 
-def run_and_summarize(data, model_func, label="b02", output_dir="results"):
+def run_and_summarize(data, model_func, label="b02", output_dir="../results", **model_kwargs):
     """
-    Runs the model, summarizes results, saves outputs: idata, summary, metrics, plots.
-    Works for B01 or B02 depending on the model_func provided.
+    Runs the specified PyMC model function with data and optional model parameters,
+    summarizes results, and saves output files including plots, summaries, and metrics.
+
+    Parameters:
+        data (dict): Dictionary with keys 'predictor' and 'outcome'.
+        model_func (function): PyMC model function to use.
+        label (str): Label to tag output files.
+        output_dir (str): Directory to save outputs.
+        **model_kwargs: Additional keyword arguments passed to model_func.
+
+    Returns:
+        idata (InferenceData): ArviZ inference data object.
+        waic (ELPDData): WAIC estimate.
+        loo (ELPDData): LOO estimate.
+        bic (float): Bayesian Information Criterion.
     """
     os.makedirs(output_dir, exist_ok=True)
 
-    model, idata, waic, loo, bic = model_func(data["predictor"], data["outcome"])
+    #Call the model function with additional model parameters
+    model, idata, waic, loo, bic = model_func(
+        data["predictor"],
+        data["outcome"],
+        **model_kwargs  # Pass arguments like variant="B01", seed=123, etc.
+    )
 
     # Save InferenceData
     idata_path = os.path.join(output_dir, f"idata_{label}.nc")
@@ -156,7 +176,7 @@ import arviz as az
 import numpy as np
 import matplotlib.pyplot as plt
 
-def run_model_diagnostics(idata, model_name="Model", output_dir="results"):
+def run_model_diagnostics(idata, model_name="Model", output_dir="../results"):
     """
     Performs standard Bayesian diagnostics on a PyMC InferenceData object.
     Saves plots and prints summary messages for convergence, divergences, etc.
@@ -231,7 +251,7 @@ def run_model_diagnostics(idata, model_name="Model", output_dir="results"):
 
 # Commented out IPython magic to ensure Python compatibility.
 # Survey Data Generation
-# %run code_snippets.py
+%run code_snippets.py
 
 d.columns
 
@@ -292,7 +312,7 @@ d_model.head()
 
 # Run and save results for B02 for survey data
 print("\nResults for B02 Model on survey data:")
-idata, *_ = run_and_summarize(d_model, ordinal_predictor_binary_outcome_model, label = "b02")
+idata, *_ = run_and_summarize(d_model, ordinal_predictor_binary_outcome_model, label = "b02", shape = 3)
 run_model_diagnostics(idata, model_name="B02", output_dir="results")
 
 """## Getting Group Size Ratio PastEx to PresentEx"""

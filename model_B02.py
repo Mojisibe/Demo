@@ -5,7 +5,7 @@ import pytensor.tensor as pt
 import random
 import pytensor
 
-def ordinal_predictor_binary_outcome_model(predictor, outcome, variant="B02", seed = 42):
+def ordinal_predictor_binary_outcome_model(predictor, outcome, variant="B02", seed = 42, shape = 4):
     """
     PyMC model with a binary outcome and an ordinal predictor with a normal random walk constraint.
     If variant=="B01", uses B01 priors else uses B02 with fluctuations around an estimated effect.
@@ -25,25 +25,22 @@ def ordinal_predictor_binary_outcome_model(predictor, outcome, variant="B02", se
         if variant == "B01":
             # B01: no "effect" or "sd_fluctuation"; level_effects_diff is N(0,2)
             intercept = pm.Normal("intercept", mu=0, sigma=2.5)
-            level_effects_diff = pm.Normal("level_effects_diff", mu=0, sigma=2, shape=4)
+            level_effects_diff = pm.Normal("level_effects_diff", mu=0, sigma=2, shape=shape)
         else:
             # B02: has "effect" and "sd_fluctuation"; level_effects_diff ~ N(effect, sd_fluctuation)
             effect = pm.Normal("effect", mu=0, sigma=0.55)
             sd_fluctuation = pm.HalfNormal("sd_fluctuation", sigma = 1)
-
             intercept = pm.Normal("intercept", mu=0, sigma=abs(effect) + 1e-3)
-            level_effects_diff = pm.Normal("level_effects_diff", mu=effect, sigma=sd_fluctuation, shape=3)
+
+            level_effects_diff = pm.Normal("level_effects_diff", mu=effect, sigma=sd_fluctuation, shape=shape)
 
         # Centered level effects
         raw_effects = pm.math.concatenate([[0], pm.math.cumsum(level_effects_diff)])
         centered_effects = raw_effects - pt.mean(raw_effects)
         level_effects = pm.Deterministic("level_effects", centered_effects)
+        
+        #Linear predictor
         logit_p = intercept + (centered_effects[predictor - 1])
-
-        #level_effects = pm.Deterministic("level_effects", pm.math.concatenate([[0], pm.math.cumsum(level_effects_diff)]))
-
-        # Linear predictor
-        #logit_p = intercept + (level_effects[predictor - 1])
         p = pm.Deterministic("p", pm.math.sigmoid(logit_p), dims="obs")  # Dimension 'p' by 'obs'
 
         # Likelihood - Associate observed data with 'obs' dimension
@@ -54,8 +51,8 @@ def ordinal_predictor_binary_outcome_model(predictor, outcome, variant="B02", se
 
         # Sampling - Request log_likelihood
         idata = pm.sample(
-            4000,
-            tune=1000,
+            5000,
+            tune=5000,
             random_seed=seed,
             return_inferencedata=True,
             target_accept=0.995,  # Increased target_accept
