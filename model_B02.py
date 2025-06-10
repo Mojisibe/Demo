@@ -51,7 +51,7 @@ def ordinal_predictor_binary_outcome_model(predictor, outcome, variant="B02", se
 
         # Sampling - Request log_likelihood
         idata = pm.sample(
-            5000,
+            6000,
             tune=5000,
             random_seed=seed,
             return_inferencedata=True,
