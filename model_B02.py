@@ -57,6 +57,8 @@ def ordinal_predictor_binary_outcome_model(predictor, outcome, variant="B02", se
             return_inferencedata=True,
             target_accept=0.995,  # Increased target_accept
             init = "adapt_diag",
+	    chains = 4,
+	    cores = 4,
             idata_kwargs={"log_likelihood": True},
             nuts={"max_treedepth": 15}  
         )
