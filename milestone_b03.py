@@ -188,7 +188,8 @@ def run_model_diagnostics(idata, model_name="Model", output_dir="../results"):
     # --- R-hat and ESS ---
     summary = az.summary(idata)
     rhat_issues = summary["r_hat"].dropna() > 1.05
-    ess_issues = summary["ess_bulk"].dropna() < 100
+    ess_bulk_issues = summary["ess_bulk"].dropna() < 200
+    ess_tail_issues = summary["ess_tail"].dropna() < 1000
 
     print("📏 R-hat summary:")
     print(summary["r_hat"].dropna())
@@ -199,10 +200,17 @@ def run_model_diagnostics(idata, model_name="Model", output_dir="../results"):
 
     print("\n📏 ESS (bulk) summary:")
     print(summary["ess_bulk"].dropna())
-    if ess_issues.any():
-        print(f"⚠️ ESS < 100 for: {list(summary[ess_issues].index)}")
+    if summary.loc["effect", "ess_bulk"] < 200:
+        print("⚠️ ESS_bulk for 'effect' is below 200")
     else:
-        print("✅ All ESS values > 100")
+        print("✅ ESS_bulk for 'effect' is ≥ 200")
+
+    print("\n📏 ESS (tail) summary:")
+    print(summary["ess_tail"].dropna())
+    if summary.loc["effect", "ess_tail"] < 1000:
+        print("⚠️ ESS_tail for 'effect' is below 1000")
+    else:
+        print("✅ ESS_tail for 'effect' is ≥ 1000")
 
     # --- Divergences ---
     if "diverging" in idata.sample_stats:
