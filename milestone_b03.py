@@ -23,7 +23,6 @@ def calculate_odds_ratio(idata, var_name="effect"):
         odds_ratios = np.exp(posterior_samples)
         hdi = az.hdi(odds_ratios, hdi_prob=0.95)
         mean_or = np.mean(odds_ratios)
-
         or_summary = pd.DataFrame({
             "mean": [mean_or],
             "hdi_lower": [hdi[0]],
@@ -189,8 +188,7 @@ def run_model_diagnostics(idata, model_name="Model", output_dir="../results"):
     summary = az.summary(idata)
     rhat_issues = summary["r_hat"].dropna() > 1.05
     ess_bulk_issues = summary["ess_bulk"].dropna() < 200
-    ess_tail_issues = summary["ess_tail"].dropna() < 1000
-
+    
     print("📏 R-hat summary:")
     print(summary["r_hat"].dropna())
     if rhat_issues.any():
@@ -200,10 +198,10 @@ def run_model_diagnostics(idata, model_name="Model", output_dir="../results"):
 
     print("\n📏 ESS (bulk) summary:")
     print(summary["ess_bulk"].dropna())
-    if summary.loc["effect", "ess_bulk"] < 200:
-        print("⚠️ ESS_bulk for 'effect' is below 200")
+    if ess_bulk_issues.any():
+        print(f"⚠️ ESS < 200 for: {list(summary[ess_bulk_issues].index)}")
     else:
-        print("✅ ESS_bulk for 'effect' is ≥ 200")
+        print("✅ All ESS values >= 200")
 
     print("\n📏 ESS (tail) summary:")
     print(summary["ess_tail"].dropna())
