@@ -316,6 +316,28 @@ d_model = pd.DataFrame({
     })
 d_model.head()
 
+# Generate 2x4 contingency table: Outcome vs I_I levels
+contingency_table = pd.crosstab(d["I_I"], d["outcome_binary"])
+contingency_table.columns = ["PresentEx (0)", "PastEx (1)"]
+contingency_table.index.name = "Likert Scale"
+print("\n2x4 Contingency Table (Likert Scale × Outcome):")
+print(contingency_table)
+
+# Add log(odds) column
+def compute_log_odds(row):
+    PastEx = row["PastEx (1)"]
+    PresentEx = row["PresentEx (0)"]
+    if PastEx == 0 or PresentEx == 0:
+        return np.nan  # avoid division by zero
+    return np.log(PastEx / PresentEx)
+
+contingency_table["log(odds)"] = contingency_table.apply(
+    lambda row: compute_log_odds(row),
+    axis=1
+)
+print("\nContingency Table with log(odds) added:")
+print(contingency_table)
+
 # Run and save results for B02 for survey data
 print("\nResults for B02 Model on survey data:")
 idata, *_ = run_and_summarize(d_model, ordinal_predictor_binary_outcome_model, label = "b02", shape = 3)
